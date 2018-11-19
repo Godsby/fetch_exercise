@@ -1,58 +1,64 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  let film = document.querySelector('#film');
-  let films = [];
+  // let film = document.querySelector('#film');
+  var movieObj = {};
   fetchAndAppend();
 
-  film.addEventListener('change', (event) => {
-    event.preventDefault();
-    removeAndDisplay();
-  });
-});
+  // film.addEventListener('change', (event) => {
+  //   removeAndDisplay();
+  // });
 
-const fetchAndAppend = () => {
-  fetch('https://ghibliapi.herokuapp.com/films')
-  .then(response => {
-    if(!response.ok) {
-      throw new Error('Connection Error!');
-    }
-    return response.json();
-  })
-  .then(parsedRes => {
-    films = parsedRes;
-    let select = document.querySelector('select');
-    if (!parsedRes.ok) {
-      let opt = document.createElement('option');
-      films.forEach(film => {
-        opt.innerText = films.title;
-        select.appendChild(opt);
-      });
-    }
-  }).catch(err =>console.log(err));
-};
+  function fetchAndAppend() {
+    fetch('https://ghibliapi.herokuapp.com/films')
+    .then(response => {
 
-const removeAndDisplay = (film) => {
+      if (!response.ok) {
+        throw new Error('Connection Error!');
+      }
+
+      return response.json();
+    })
+    .then(parsedRes => {
+      films = parsedRes;
+      let select = document.querySelector('select');
+      if (!parsedRes.ok) {
+        films.forEach(film => {
+          movieObj[film.id] = film;
+          let opt = document.createElement('option');
+          opt.innerText = film.title;
+          select.appendChild(opt);
+          opt.value = film.id;
+        });
+      }
+    }).catch(err =>console.log(err));
+  };
+
   let select = document.querySelector('select');
-  let userChoice;
-  if(userChoice === select.value) {
-    let ul = document.querySelector('ul');
-    ul.remove();
-    display(film);
-  } else {
-    userChoice = select.value;
-  }
-  return films[select.value];
-}
+  select.addEventListener('change', (event) => {
+    getMovie(event.target.value);
 
-const display = (film) => {
-  let div = document.querySelector('div');
-  let ul = document.createElement('ul');
-  let keysArr = ['Title', 'Director', 'Description', 'Release-date', 'Rotten-tomatoes-score'];
-  keysArr.forEach(key => {
-    let li = document.createElement('li');
-    li.innerText = `${key}: ${film[key]}`;
-    ul.appendChild(li)
   });
-  div.appendChild(ul);
-}
+
+  function getMovie(id) {
+    fetch(`https://ghibliapi.herokuapp.com/films/${id}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Connection Error!');
+      }
+
+      return response.json();
+    })
+    .then(res => {
+      let div = document.querySelector('div');
+      let ul = document.createElement('ul');
+      let keysArr = ['title', 'director', 'description', 'release_date', 'rt_score'];
+      keysArr.forEach(key => {
+        let li = document.createElement('li');
+        li.innerText = `${key}: \n ${res[key]}`;
+        ul.appendChild(li);
+      });
+      div.appendChild(ul);
+    });
+  }
+});
